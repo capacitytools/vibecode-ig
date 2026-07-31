@@ -47,8 +47,7 @@ export default function Home() {
       try {
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.instagram.com/${username}/?__a=1`)}`;
         const response = await fetch(proxyUrl);
-        const data = await response.json();
-        const edges = data.graphql?.user?.edge_owner_to_timeline_media?.edges || [];
+        const data = await response.json();        const edges = data.graphql?.user?.edge_owner_to_timeline_media?.edges || [];
         
         const videoPosts = edges
           .filter((edge: any) => edge.node.is_video)
@@ -97,3 +96,105 @@ export default function Home() {
               Instagram blocks automated scraping from external sites. Use the manual embed below:
             </p>
             <ManualEmbed onVideoAdded={() => fetchInstagramVideos(handle)} />
+          </div>        </div>
+      ) : posts.length > 0 ? (
+        <div className="max-w-4xl mx-auto grid gap-8">
+          {posts.map((post, idx) => (
+            <article key={idx} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                  🎥 Video Post #{idx + 1}
+                </h2>
+                <p className="text-gray-600 text-sm mb-2">
+                  <span className="font-semibold">Posted by:</span> @{handle}
+                </p>
+                {post.node.edge_media_to_caption?.edges[0]?.node.text && (
+                  <div className="bg-gray-50 p-4 rounded-lg mt-3">
+                    <p className="text-gray-700 italic">
+                      "{post.node.edge_media_to_caption.edges[0].node.text.substring(0, 200)}
+                      {post.node.edge_media_to_caption.edges[0].node.text.length > 200 ? '...' : ''}"
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Instagram Video Embed */}
+              <div className="bg-gray-100 flex justify-center p-6">
+                <iframe
+                  src={`https://www.instagram.com/p/${post.node.shortcode}/embed`}
+                  width="100%"
+                  height="600"
+                  frameBorder="0"
+                  scrolling="no"
+                  allowTransparency={true}
+                  className="rounded-lg max-w-md shadow-md"
+                  title={`Instagram video ${idx + 1}`}
+                ></iframe>
+              </div>
+              
+              <div className="p-4 bg-purple-50 text-center text-sm text-purple-700 font-medium">
+                ✅ Hosted & Playable on VibeCode Platform
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="max-w-2xl mx-auto text-center py-12">
+          <p className="text-gray-500 mb-4">No videos found</p>
+          <ManualEmbed onVideoAdded={() => fetchInstagramVideos(handle)} />
+        </div>
+      )}
+    </main>
+  );}
+
+// Manual Embed Component
+function ManualEmbed({ onVideoAdded }: { onVideoAdded: () => void }) {
+  const [url, setUrl] = useState("");
+  const [embedUrl, setEmbedUrl] = useState("");
+  const [added, setAdded] = useState(false);
+
+  const generateEmbed = () => {
+    const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+      setEmbedUrl(`https://www.instagram.com/p/${match[1]}/embed`);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 3000);
+    } else {
+      alert("Invalid Instagram URL. Use format:\nhttps://instagram.com/p/ABC123\nor\nhttps://instagram.com/reel/ABC123");
+    }
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+      <h3 className="text-lg font-bold text-gray-800 mb-3">📌 Manual Video Embed</h3>
+      <p className="text-sm text-gray-600 mb-4">
+        Paste any Instagram video URL to add it to your blog:
+      </p>
+      <input 
+        type="text" 
+        placeholder="https://instagram.com/p/ABC123 or https://instagram.com/reel/ABC123" 
+        className="w-full p-3 border border-gray-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+      />
+      <button 
+        onClick={generateEmbed} 
+        className="w-full bg-purple-600 text-white p-3 rounded-lg font-bold hover:bg-purple-700 active:bg-purple-800 transition cursor-pointer shadow-md"
+      >
+        {added ? "✅ Added to Blog!" : " Generate Blog Post"}
+      </button>
+      {embedUrl && (
+        <div className="mt-6 flex justify-center">
+          <iframe 
+            src={embedUrl} 
+            width="100%" 
+            height="500" 
+            frameBorder="0" 
+            scrolling="no" 
+            allowTransparency={true}
+            className="rounded-lg max-w-md shadow-lg"
+          ></iframe>
+        </div>      )}
+    </div>
+  );
+}
