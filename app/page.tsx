@@ -15,7 +15,6 @@ export default function Home() {
   const fetchPosts = async (username: string) => {
     setLoading(true);
     // We use a free public CORS proxy to fetch Instagram's public JSON
-    // Note: For production, replace this with a free RapidAPI Instagram Scraper key
     try {
       const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.instagram.com/${username}/?__a=1&__d=dis`)}`);
       const data = await res.json();
@@ -47,8 +46,8 @@ export default function Home() {
                 <h2 className="text-2xl font-bold mb-2">New Video Post #{idx + 1}</h2>
                 <p className="text-gray-600 mb-4">{post.node.edge_media_to_caption.edges[0]?.node.text || "No caption"}</p>
               </div>
-              {/* Official Instagram Embed - Plays directly on YOUR site */}              <div className="bg-gray-100 flex justify-center p-4">
-                <iframe
+              {/* Official Instagram Embed - Plays directly on YOUR site */}
+              <div className="bg-gray-100 flex justify-center p-4">                <iframe
                   src={`https://www.instagram.com/p/${post.node.shortcode}/embed`}
                   width="100%"
                   height="500"
@@ -80,9 +79,12 @@ function ManualEmbed() {
   const [embedUrl, setEmbedUrl] = useState("");
 
   const generateEmbed = () => {
-    const match = url.match(/instagram\.com\/p\/([a-zA-Z0-9_-]+)/);
-    if (match) {
-      setEmbedUrl(`https://www.instagram.com/p/${match[1]}/embed`);
+    // Fixed regex to match both /p/ and /reel/ URLs
+    const match = url.match(/instagram\.com\/(p|reel)\/([a-zA-Z0-9_-]+)/);
+    if (match && match[2]) {
+      setEmbedUrl(`https://www.instagram.com/${match[1]}/${match[2]}/embed`);
+    } else {
+      alert("Invalid Instagram URL. Please use format: https://instagram.com/p/ABC123 or https://instagram.com/reel/ABC123");
     }
   };
 
@@ -90,15 +92,27 @@ function ManualEmbed() {
     <div>
       <input 
         type="text" 
-        placeholder="https://instagram.com/p/ABC123..." 
+        placeholder="https://instagram.com/p/ABC123 or https://instagram.com/reel/ABC123" 
         className="w-full p-3 border rounded-lg mb-2"
+        value={url}
         onChange={(e) => setUrl(e.target.value)}
-      />
-      <button onClick={generateEmbed} className="w-full bg-purple-600 text-white p-3 rounded-lg font-bold">
+      />      <button 
+        onClick={generateEmbed} 
+        className="w-full bg-purple-600 text-white p-3 rounded-lg font-bold hover:bg-purple-700 active:bg-purple-800 cursor-pointer"
+      >
         Generate Blog Post
-      </button>      {embedUrl && (
+      </button>
+      {embedUrl && (
         <div className="mt-4 flex justify-center">
-          <iframe src={embedUrl} width="100%" height="400" frameBorder="0" className="rounded-lg max-w-md"></iframe>
+          <iframe 
+            src={embedUrl} 
+            width="100%" 
+            height="500" 
+            frameBorder="0" 
+            scrolling="no" 
+            allowTransparency={true}
+            className="rounded-lg max-w-md"
+          ></iframe>
         </div>
       )}
     </div>
